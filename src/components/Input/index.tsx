@@ -1,5 +1,6 @@
-import React, { InputHTMLAttributes } from 'react';
+import React, { InputHTMLAttributes, useEffect, useRef } from 'react';
 import { IconBaseProps } from 'react-icons';
+import { useField } from '@unform/core';
 
 import { Container } from './styles';
 
@@ -8,11 +9,45 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     icon?: React.ComponentType<IconBaseProps>;
 }
 
-const Input: React.FC<InputProps> = ({ icon: Icon, ...rest }) => (
-    <Container>
-        { Icon && <Icon size={20} /> }
-        <input {...rest} />
-    </Container>
-);
+const Input: React.FC<InputProps> = ({ name, icon: Icon, ...rest }) => {
+    
+    /*
+    * Permite acessar as propriedades do elemento como na DOM
+    * precisa ser atribuída ao input para recuperar esses dados
+    */
+    const inputRef = useRef(null);
+    
+    /*
+    * Recebe o nome do campo como argumento e irá retornar alguns dados
+    * que serão usados para receber o valor do input e fazer outras tratativas
+    */
+    const { fieldName, defaultValue, error, registerField } = useField(name);
+
+    //assim que o componente for exibido em tela, ela recebe o registerField
+    useEffect(() => {
+        registerField({
+            name: fieldName,
+            ref: inputRef.current,
+            path: 'value',
+        });
+    }, [fieldName, registerField]);
+
+    /*
+    * Observações sobre o registerField
+    * O name vem do fieldName pois o name original pode ser alterado devido 
+    * à algumas condições do unform
+    * O ref seria como acessar os dados do input direto da DOM, para passar o
+    * valor para esse campo precisamos instalar o useRef e informar o "current"
+    * O path é de onde unform vai buscar esse referência do valor preenchido no
+    * input que no caso é o "value"
+    */
+
+    return (
+        <Container>
+            { Icon && <Icon size={20} /> }
+            <input defaultValue={defaultValue} ref={inputRef} {...rest} />
+        </Container>
+    );
+};
 
 export default Input;
